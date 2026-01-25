@@ -1,18 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <iostream>
-#include <process.h>
 #include <sstream>
-#include <windows.h>
 #include <vector>
 #include <cstdlib>
 #include <ctime>
-#include <stdlib.h>
-#include <cstdlib>
 #include <chrono>
-#include <vector>
-#include <ctime> // Per std::localtime
+#include <limits>
 //srand(unsigned(time(NULL))); 
 //n1 = rand()%10;
 //SetConsoleTextAttribute(h, 14);
@@ -142,6 +136,7 @@ struct Anno{
             cout << "Raggiunto? (1 = sì, 0 = no): ";
             int r;
             cin >> r;
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             if(r == 1){
                 esito_vec.push_back("fatto");
             } else {
@@ -168,9 +163,9 @@ struct Anno{
     int n;
     cout << "Quanti obbiettivi vuoi registrare per il nuovo anno? ";
     cin >> n;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     string ob;
-    getline(cin, ob); // pulizia buffer
 
     for(int i=0; i<n; i++){
         cout << "Inserisci obbiettivo " << i+1 << ": ";
@@ -358,7 +353,7 @@ void mostra_statistiche_routine() {
 void mostra_obbiettivi_anno() {
 
     int anno_corrente = a.anno;
-    string file = to_string(anno_corrente) + "_anno.txt";
+    string file = "obbiettivi_anno_" + to_string(anno_corrente) + ".txt";
 
     ifstream in(file);
     if (!in.good()) {
@@ -563,7 +558,7 @@ void mostra_spese() {
 	cout<<"setta il diario o aggiungi una routine = 1 "<<endl;
 	cout<<"registra il diario del giorno = 2"<<endl;
 	if(g.giorno==1){
-		cout<<"oggi e' il primo del mese, puoi registrare anche i preferisti del mese scroso = 3"<<endl;
+		cout<<"oggi e' il primo del mese, puoi registrare anche i preferiti del mese scorso = 3"<<endl;
 	}
 	if(g.giorno==1&&g.mese==1){
 		cout<<"oggi è anche il primo dell'anno vuoi registrare l'anno = 4"<<endl;
@@ -574,6 +569,7 @@ void mostra_spese() {
 
 	cout<<"inserisci: ";
 	cin>>scelta;
+	cin.ignore(numeric_limits<streamsize>::max(), '\n');
 	switch(scelta){
 		case 1:
 			setta_diario();
@@ -610,26 +606,33 @@ void mostra_spese() {
 	
 }
 	void routine_mese(){
-		time_t tempo_corrente = std::time(nullptr);
-    tm* tempo_locale = std::localtime(&tempo_corrente);
-    int anno = tempo_locale->tm_year + 1900;
 		string nome_file=to_string(m.mese);
-			nome_file+="_"+to_string(m.anno)+"_routine";
-		nome_file+=".txt";
+		nome_file+="_"+to_string(m.anno)+"_routine.txt";
 		
+		ifstream check(nome_file);
+		if(check.good()){
+			cout << "File di routine mensile gia' esistente." << endl;
+			check.close();
+			return;
+		}
+		check.close();
+
 		int k=0;
 		string line;
 		ifstream intputfile("elenco_routine.txt");
+		if(!intputfile.good()){
+			return;
+		}
 		while(getline(intputfile,line)){
 			k++;
 		}
 		intputfile.close();
 		intputfile.open("elenco_routine.txt");
-		string routine[k];
+		vector<string> routine(k);
 		for(int i=0;i<k;i++){
 			getline(intputfile,routine[i]);
 		}
-			intputfile.close();
+		intputfile.close();
 		ofstream outputfile(nome_file);
 		for(int i=0;i<k;i++){
 			outputfile<<routine[i]<<":"<<"0"<<";"<<endl;
@@ -637,20 +640,21 @@ void mostra_spese() {
 		outputfile.close();
 	}
 	void registra_mese(){
-		time_t tempo_corrente = std::time(nullptr);
-    tm* tempo_locale = std::localtime(&tempo_corrente);
-    int anno = tempo_locale->tm_year + 1900;
-    m.mese--;
-		string nome_file=to_string(m.mese);
-		nome_file+="_"+to_string(m.anno);
+		int mese_prec = m.mese - 1;
+		int anno_prec = m.anno;
+		if (mese_prec == 0) {
+			mese_prec = 12;
+			anno_prec--;
+		}
+		string nome_file=to_string(mese_prec);
+		nome_file+="_"+to_string(anno_prec);
 		nome_file+=".txt";
 		cout<<nome_file<<endl;
 		ofstream outputfile(nome_file);
-		outputfile<<nome_file<<"preferiti del mese: "<<endl;
-		cout<<"Ora registrerai i preferiti del mese scroso: ";
+		outputfile<<nome_file<<" preferiti del mese: "<<endl;
+		cout<<"Ora registrerai i preferiti del mese scorso: ";
 		cout<<"Film: ";
 		getline(cin,m.film);
-			getline(cin,m.film);
 		outputfile<<"film preferito: "<<m.film<<endl;
 		cout<<"serie_tv: ";
 		getline(cin,m.serie_tv);
@@ -697,7 +701,7 @@ void setta_diario(){
 		cout<<"inserisci il numero di routine che vuoi inserire: ";
 		cin>>n;
 		ofstream outputfile("routine.txt",ios::trunc);
-		Routine routines[n];
+		vector<Routine> routines(n);
 		for(int i=0;i<n;i++){
 		cout<<"inserisci le tue routine, come: leggere ,giocare, allenarsi etc. ";
 		cin>>routines[i].nome;
@@ -717,7 +721,7 @@ void setta_diario(){
 		cout<<"quante routine vuoi aggiungere?";
 		int n;
 		cin>>n;
-		Routine routines[n];
+		vector<Routine> routines(n);
 		ofstream outputfile("routine.txt",ios::app);
 		
 		for(int i=0;i<n;i++){
@@ -750,40 +754,38 @@ void registra_giorno(){
 		int k=0;
 		string line;
 			while(getline(intputfile,line)){
-			k++;
+			if(!line.empty()) k++;
 		}
-		Routine routines[k];
+		vector<Routine> routines(k);
 		intputfile.close();
 		
-		for(int i=0;i<k;i++){
-			intputfile.open("routine.txt");
-			for(int j=0;j<i;j++){
-				string line1;
-				getline(intputfile,line1);	
-		}
-	
-			getline(intputfile,line,';');
-			routines[i].nome=line;
-			
-			getline(intputfile,line,';');
-			string anno_c=to_string(g.anno);
-			while(line!=anno_c){
-				getline(intputfile,line,';');
-				getline(intputfile,line,';');
-			}
-			getline(intputfile,line,';');
-			routines[i].n_volte= stoi(line);
-			intputfile.close();			
-		}
-		
-		string routine[k];
 		intputfile.open("routine.txt");
+		vector<string> routine_lines(k);
 		for(int i=0;i<k;i++){
-			getline(intputfile,routine[i]);
+			getline(intputfile, routine_lines[i]);
+			if(!routine_lines[i].empty() && routine_lines[i].back() == ';'){
+				routine_lines[i].pop_back();
+			}
+			
+			stringstream ss(routine_lines[i]);
+			getline(ss, routines[i].nome, ';');
+
+			string anno_c = to_string(g.anno);
+			string campo_anno, campo_valore;
+			routines[i].n_volte = 0;
+			while(getline(ss, campo_anno, ';')){
+				if(getline(ss, campo_valore, ';')){
+					if(campo_anno == anno_c){
+						routines[i].n_volte = stoi(campo_valore);
+						break;
+					}
+				}
+			}
 		}
 		intputfile.close();
+
 	cout<<"inserisci 1 se ha fatto la routine, 0 se non l'hai fatta. Le tue routine sono: "<<endl;
-	int routine_n[k];
+	vector<int> routine_n(k);
 	for(int i=0;i<k;i++){
 		cout<<routines[i].nome<<endl;	
 		}
@@ -792,7 +794,7 @@ void registra_giorno(){
 	cin>>routine_n[i];
 	if(routine_n[i]==1){
 		routines[i].fatto=true;
-		 	stringstream ss(routine[i]);
+		stringstream ss(routine_lines[i]);
     		string campo;
     		vector<string> campi;
     while (getline(ss, campo, ';')) {
@@ -804,9 +806,9 @@ void registra_giorno(){
 					int n = stoi(campi[v+1]);
 					n++;
 					campi[v+1]=to_string(n);
-					routine[i]= campi[0];
+					routine_lines[i]= campi[0];
     				for (int l = 1; l < campi.size(); l++) {
-       					 routine[i]+= ";" + campi[l];
+					 routine_lines[i]+= ";" + campi[l];
     				}
     				campi={};
 					break;
@@ -814,9 +816,10 @@ void registra_giorno(){
 			}
 	}
 }
+cin.ignore(numeric_limits<streamsize>::max(), '\n');
 	outputfile.open("routine.txt",ios::trunc);
 	for(int i=0;i<k;i++){
-		outputfile<<routine[i]<<";"<<endl;
+		outputfile<<routine_lines[i]<<";"<<endl;
 	}
 	outputfile.close();
 	outputfile.open(file,ios::app);
@@ -828,7 +831,6 @@ void registra_giorno(){
 	}
 		outputfile<<endl<<"racconto giornata: ";
 	cout<<"racconta la tua giornata: ";
-	getline(cin,g.racconta_la_giornata);
 	getline(cin,g.racconta_la_giornata);
 	outputfile<<endl<<g.racconta_la_giornata<<endl;
 	outputfile<<endl<<"tempo atmosferico: ";
@@ -842,6 +844,7 @@ void registra_giorno(){
 	cin>>g.voto_del_giorno;
 	cout<<"quanto hai speso?: ";
 	cin>>g.acquisti;
+	cin.ignore(numeric_limits<streamsize>::max(), '\n');
 	registra_spesa_mensile(g.acquisti);
 	registra_spesa_annuale(g.acquisti);
 
