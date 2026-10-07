@@ -1,0 +1,3 @@
+// Risorse della versione grafica: il manifest attiva lo stile moderno dei controlli di Windows
+#include <winuser.h>
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "diario.manifest"
