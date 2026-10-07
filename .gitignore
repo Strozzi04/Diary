@@ -1,0 +1,4 @@
+# File creati dal diario durante l'uso (dati personali)
+Diario/*.txt
+# File intermedi di compilazione
+*.o

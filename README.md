@@ -49,11 +49,43 @@ Totale spese mensili e annuali
 
 Media mensile e media annuale delle spese
 
+🖥️ Interfaccia grafica
+
+Oltre alla versione a console c'è ora una versione con finestre (DiarioGUI.exe), divisa in schede:
+
+Giorno: scegli la data, spunta le routine fatte, racconta la giornata, dai un voto e inserisci la spesa. Puoi riaprire e correggere un giorno già scritto.
+
+Routine: quante volte hai fatto ogni routine nel mese e nell'anno scelti; da qui puoi anche aggiungerne di nuove.
+
+Mese: i preferiti di ogni mese (si apre già sul mese scorso).
+
+Anno: obiettivi dell'anno (aggiungi, segna come raggiunto / non raggiunto, elimina) e preferiti dell'anno.
+
+Spese: riepilogo del mese e dell'anno, medie e grafico a barre delle spese mese per mese.
+
+Le due versioni usano gli stessi file: i dati scritti con una si vedono anche con l'altra.
+
 ▶️ Avvio del programma
 
-Potete scaricare la cartella completa del progetto e avviare il file:
+Potete scaricare la cartella completa del progetto e avviare, dalla cartella Diario:
 
-diario.exe
+DiarioGUI.exe (versione grafica)
+
+Diario.exe (versione a console)
+
+I file del diario vengono salvati nella stessa cartella del programma.
+
+🔨 Compilazione
+
+Il codice è diviso in tre parti:
+
+diario_core.cpp / diario_core.h: tutta la logica e la gestione dei file
+
+Diario.cpp: menu a console
+
+DiarioGUI.cpp: interfaccia grafica (API Win32, non servono librerie esterne)
+
+Con MinGW (ad esempio quello di Dev-C++) basta eseguire build.bat nella cartella Diario.
 
 📌 Consigli
 
